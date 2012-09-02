@@ -1,0 +1,14 @@
+<resources>
+
+    <string name="app_name">Julius</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_julius">Julius for Android</string>
+    <string name="speech">Speech</string>
+    <string name="recording">Recording</string>
+    <string name="recogninzing">Recognizing</string>
+    <string name="init_text">ここに認識した音声が表示されます</string>
+    <string name="continuous">連続音声認識</string>
+    <string name="grammer">記述文法</string>
+    <string name="initializing_message">Juliusを初期化中</string>
+    <string name="recognizing_message">音声認識処理中</string>
+</resources>

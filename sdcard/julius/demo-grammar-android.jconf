@@ -1,0 +1,17 @@
+-dfa grammar/demo.dfa
+-v grammar/demo.dict
+#
+-b 600
+-b2 100
+-penalty1 -7.0
+-penalty2 0.0
+#-1pass
+#
+#-input mic -demo
+#-input file
+#
+#-C ../../jconf/_AM_JNAS_tri
+-input rawfile
+-smpFreq 22050
+-h model/phone_m/hmmdefs_ptm_gid.binhmm
+-hlist model/phone_m/logicalTri
