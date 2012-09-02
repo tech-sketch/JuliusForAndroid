@@ -1,6 +1,5 @@
 <resources>
-
-    <string name="app_name">Julius</string>
+    <string name="app_name">Julius for Android</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_julius">Julius for Android</string>
     <string name="speech">Speech</string>
