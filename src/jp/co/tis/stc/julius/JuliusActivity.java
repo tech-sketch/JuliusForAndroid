@@ -73,6 +73,15 @@ public class JuliusActivity extends Activity {
         		AudioFormat.ENCODING_PCM_16BIT,
         		bufSize);
     }
+	
+	@Override
+	protected void onDestroy() {
+		if (isInitialized) {
+			terminateJulius();
+			isInitialized = false;
+		}
+		super.onDestroy();
+	}
 
 	private class JuliusInitializer extends AsyncTask<Integer, Void, Boolean> {
 		private ProgressDialog progressDialog;

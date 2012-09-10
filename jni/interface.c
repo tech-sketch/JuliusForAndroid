@@ -164,7 +164,7 @@ JNIEXPORT void JNICALL Java_jp_co_tis_stc_julius_JuliusActivity_terminateJulius
   __android_log_print(ANDROID_LOG_DEBUG, "Julius interface.c", "terminateJulius start");
 #endif
   j_close_stream(recog);
-//  j_recog_free(recog);
+  j_recog_free(recog);
 #ifdef ANDROID_DEBUG
   __android_log_print(ANDROID_LOG_DEBUG, "Julius interface.c", "terminateJulius end");
 #endif
