@@ -9,14 +9,8 @@
 Recog *recog;
 JNIEnv *genv;
 jobject *gobj;
-//struct jenv {
-//  JNIEnv *env;
-//  jobject obj;
-//};
 
 static void output_result(Recog *recog, void *dummy);
-
-jstring NewStringEUC(JNIEnv *env, char *euc);
 
 JNIEXPORT jboolean JNICALL Java_jp_co_tis_stc_julius_JuliusActivity_initJulius
   (JNIEnv *env, jobject obj, jstring jconfpath)
@@ -92,6 +86,7 @@ JNIEXPORT void JNICALL Java_jp_co_tis_stc_julius_JuliusActivity_recognize
     jmethodID jmethod = (*env)->GetMethodID(env, jcls, "callback", "(Ljava/lang/String;)V");
     jstring jstr = (*env)->NewStringUTF(env, "wave open error");
     (*env)->CallVoidMethod(env, obj, jmethod, jstr);
+    (*env)->DeleteLocalRef(env, jstr);
     return;
   }
 #ifdef ANDROID_DEBUG
@@ -105,6 +100,7 @@ JNIEXPORT void JNICALL Java_jp_co_tis_stc_julius_JuliusActivity_recognize
     jmethodID jmethod = (*env)->GetMethodID(env, jcls, "callback", "(Ljava/lang/String;)V");
     jstring jstr = (*env)->NewStringUTF(env, "wave recognize error");
     (*env)->CallVoidMethod(env, obj, jmethod, jstr);
+    (*env)->DeleteLocalRef(env, jstr);
     return;
   }
 }
@@ -155,6 +151,7 @@ static void output_result(Recog *recog, void *dummy) {
   jclass jcls = (*genv)->GetObjectClass(genv, *gobj);
   jmethodID jmethod = (*genv)->GetMethodID(genv, jcls, "callback", "([B)V");
   (*genv)->CallVoidMethod(genv, *gobj, jmethod, jbarray);
+  (*genv)->DeleteLocalRef(genv, jbarray);
 #ifdef ANDROID_DEBUG
   __android_log_print(ANDROID_LOG_DEBUG, "Julius interface.c", "output_result end");
 #endif
