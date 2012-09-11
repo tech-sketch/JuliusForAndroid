@@ -168,6 +168,9 @@ public class JuliusActivity extends Activity {
 				FileOutputStream fout = null;
 				DataOutputStream dout = null;
 				try {
+					if (recFile.exists()) {
+						recFile.delete();
+					}
 					recFile.createNewFile();
 					fout = new FileOutputStream(recFile);
 					dout = new DataOutputStream(fout);
