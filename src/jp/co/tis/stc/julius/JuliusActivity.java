@@ -26,24 +26,20 @@ public class JuliusActivity extends Activity {
 	private static final String TAG = "Julius JulisuActivity";
 	private static final String CONTINUOUS_JCONF = "/julius/fast-android.jconf";
 	private static final String GRAMMAR_JCONF = "/julius/demo-grammar-android.jconf";
-
 	private static final String WAVE_PATH = "/julius/voice.wav";
 	private static final int SAMPLING_RATE = 22050;
+	
 	static {
 		System.loadLibrary("julius_arm");
 	}
-
 	private native boolean initJulius(String jconfpath);
-
 	private native void recognize(String wavpath);
-
 	private native void terminateJulius();
 
 	private boolean isInitialized = false;
 
 	private AudioRecord audioRec = null;
 	private int bufSize = 0;
-	private boolean isRecording = false;
 	private String resultStr = "";
 	private RadioGroup radioGroup;
 	private TextView resultText;
@@ -55,28 +51,24 @@ public class JuliusActivity extends Activity {
 		setContentView(R.layout.activity_julius);
 		resultText = (TextView) findViewById(R.id.result_text);
 
-		button = (Button) findViewById(R.id.speech_button);
-		button.setEnabled(false);
-		button.setOnClickListener(onClickListener);
-
-		radioGroup = (RadioGroup) findViewById(R.id.radiogroup);
-		radioGroup
-				.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-					@Override
-					public void onCheckedChanged(RadioGroup group, int checkedId) {
-						new JuliusInitializer(JuliusActivity.this)
-								.execute(checkedId);
-					}
-				});
-
-		android.os.Process
-				.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 		bufSize = AudioRecord.getMinBufferSize(SAMPLING_RATE,
 				AudioFormat.CHANNEL_CONFIGURATION_MONO,
 				AudioFormat.ENCODING_PCM_16BIT) * 2;
 		audioRec = new AudioRecord(MediaRecorder.AudioSource.MIC,
 				SAMPLING_RATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
 				AudioFormat.ENCODING_PCM_16BIT, bufSize);
+
+		radioGroup = (RadioGroup) findViewById(R.id.radiogroup);
+		radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+					@Override
+					public void onCheckedChanged(RadioGroup group, int checkedId) {
+						new JuliusInitializer(JuliusActivity.this).execute(checkedId);
+					}
+				});
+
+		button = (Button) findViewById(R.id.speech_button);
+		button.setEnabled(false);
+		button.setOnClickListener(onClickListener);
 	}
 
 	@Override
@@ -100,8 +92,7 @@ public class JuliusActivity extends Activity {
 		protected void onPreExecute() {
 			Log.d(TAG, "JuliusInitializer:onPreExecute");
 			progressDialog = new ProgressDialog(context);
-			progressDialog.setMessage(JuliusActivity.this
-					.getString(R.string.initializing_message));
+			progressDialog.setMessage(JuliusActivity.this.getString(R.string.initializing_message));
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			progressDialog.show();
 		}
@@ -114,8 +105,7 @@ public class JuliusActivity extends Activity {
 			String conf;
 			int checkedId = params[0];
 			if (checkedId == R.id.continuous) {
-				Log.d(TAG,
-						"JuliusInitializer:doInBackground:conf is continuous");
+				Log.d(TAG, "JuliusInitializer:doInBackground:conf is continuous");
 				conf = CONTINUOUS_JCONF;
 			} else if (checkedId == R.id.grammer) {
 				Log.d(TAG, "JuliusInitializer:doInBackground:conf is grammer");
@@ -126,8 +116,7 @@ public class JuliusActivity extends Activity {
 			}
 
 			if (initJulius(Environment.getExternalStorageDirectory() + conf)) {
-				Log.d(TAG,
-						"JuliusInitializer:doInBackground:init julius success");
+				Log.d(TAG, "JuliusInitializer:doInBackground:init julius success");
 				return true;
 			} else {
 				Log.e(TAG, "JuliusInitializer:doInBackground:init julius error");
@@ -145,66 +134,67 @@ public class JuliusActivity extends Activity {
 			} else {
 				isInitialized = false;
 				button.setEnabled(false);
-				Toast.makeText(context, "initJulius Error", Toast.LENGTH_LONG)
-						.show();
+				Toast.makeText(context, "initJulius Error", Toast.LENGTH_LONG).show();
 			}
 		}
 	}
 
 	private final View.OnClickListener onClickListener = new View.OnClickListener() {
+		private FileOutputStream fout = null;
+		private DataOutputStream dout = null;
+		private boolean isRecording = false;
+		
 		@Override
 		public void onClick(View v) {
-			if (isRecording) {
-				Log.d(TAG, "call recognize");
-				isRecording = false;
-				button.setText(R.string.recogninzing);
-				button.setEnabled(false);
-				new JuliusRecognizer(JuliusActivity.this).execute(Environment
-						.getExternalStorageDirectory() + WAVE_PATH);
-			} else {
+			if (!isRecording) {
 				Log.d(TAG, "start recording");
 				isRecording = true;
 				button.setText(R.string.recording);
-				resultText.setText(JuliusActivity.this
-						.getString(R.string.init_text));
-				File recFile = new File(
-						Environment.getExternalStorageDirectory() + WAVE_PATH);
+				resultText.setText(JuliusActivity.this.getString(R.string.init_text));
+				File recFile = new File(Environment.getExternalStorageDirectory() + WAVE_PATH);
 				try {
 					recFile.createNewFile();
-					final FileOutputStream fout = new FileOutputStream(recFile);
-					final DataOutputStream dout = new DataOutputStream(fout);
+					fout = new FileOutputStream(recFile);
+					dout = new DataOutputStream(fout);
 					audioRec.startRecording();
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							android.os.Process
-									.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-							short buf[] = new short[bufSize];
-							while (isRecording) {
-								audioRec.read(buf, 0, buf.length);
-								try {
-									for (short s : buf) {
-										dout.writeShort(Short.reverseBytes(s));
-									}
-								} catch (IOException e) {
-									Log.e(TAG, e.toString());
-								}
-							}
-							audioRec.stop();
-							try {
-								dout.close();
-								fout.close();
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							}
-							Log.d(TAG, "end recording");
-						}
-					}).start();
+					new Thread(writeAudioToFile).start();
 				} catch (IOException e) {
 					Log.e(TAG, e.toString());
 				}
 			}
+			else {
+				Log.d(TAG, "call recognize");
+				isRecording = false;
+				button.setText(R.string.recogninzing);
+				button.setEnabled(false);
+				new JuliusRecognizer(JuliusActivity.this).execute(Environment.getExternalStorageDirectory() + WAVE_PATH);
+			}
 		}
+		private final Runnable writeAudioToFile = new Runnable() {
+			@Override
+			public void run() {
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+				short buf[] = new short[bufSize];
+				while (isRecording) {
+					audioRec.read(buf, 0, buf.length);
+					try {
+						for (short s : buf) {
+							dout.writeShort(Short.reverseBytes(s));
+						}
+					} catch (IOException e) {
+						Log.e(TAG, e.toString());
+					}
+				}
+				audioRec.stop();
+				try {
+					dout.close();
+					fout.close();
+				} catch (IOException e) {
+					Log.e(TAG, e.toString());
+				}
+				Log.d(TAG, "end recording");
+			}
+		};
 	};
 
 	private class JuliusRecognizer extends AsyncTask<String, Void, Void> {
@@ -219,8 +209,7 @@ public class JuliusActivity extends Activity {
 		protected void onPreExecute() {
 			Log.d(TAG, "JuliusRecognizer:onPreExecute");
 			progressDialog = new ProgressDialog(context);
-			progressDialog.setMessage(JuliusActivity.this
-					.getString(R.string.recognizing_message));
+			progressDialog.setMessage(JuliusActivity.this.getString(R.string.recognizing_message));
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			progressDialog.show();
 		}
