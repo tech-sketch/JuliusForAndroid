@@ -140,8 +140,6 @@ public class JuliusActivity extends Activity {
 	}
 
 	private final View.OnClickListener onClickListener = new View.OnClickListener() {
-		private FileOutputStream fout = null;
-		private DataOutputStream dout = null;
 		private boolean isRecording = false;
 		
 		@Override
@@ -151,16 +149,8 @@ public class JuliusActivity extends Activity {
 				isRecording = true;
 				button.setText(R.string.recording);
 				resultText.setText(JuliusActivity.this.getString(R.string.init_text));
-				File recFile = new File(Environment.getExternalStorageDirectory() + WAVE_PATH);
-				try {
-					recFile.createNewFile();
-					fout = new FileOutputStream(recFile);
-					dout = new DataOutputStream(fout);
-					audioRec.startRecording();
-					new Thread(writeAudioToFile).start();
-				} catch (IOException e) {
-					Log.e(TAG, e.toString());
-				}
+				audioRec.startRecording();
+				new Thread(writeAudioToFile).start();
 			}
 			else {
 				Log.d(TAG, "call recognize");
@@ -174,23 +164,31 @@ public class JuliusActivity extends Activity {
 			@Override
 			public void run() {
 				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-				short buf[] = new short[bufSize];
-				while (isRecording) {
-					audioRec.read(buf, 0, buf.length);
-					try {
+				File recFile = new File(Environment.getExternalStorageDirectory() + WAVE_PATH);
+				FileOutputStream fout = null;
+				DataOutputStream dout = null;
+				try {
+					recFile.createNewFile();
+					fout = new FileOutputStream(recFile);
+					dout = new DataOutputStream(fout);
+				
+					short buf[] = new short[bufSize];
+					while (isRecording) {
+						audioRec.read(buf, 0, buf.length);
 						for (short s : buf) {
 							dout.writeShort(Short.reverseBytes(s));
 						}
+					}
+					audioRec.stop();
+				} catch (IOException e) {
+					Log.e(TAG, e.toString());
+				} finally {
+					try {
+						dout.close();
+						fout.close();
 					} catch (IOException e) {
 						Log.e(TAG, e.toString());
 					}
-				}
-				audioRec.stop();
-				try {
-					dout.close();
-					fout.close();
-				} catch (IOException e) {
-					Log.e(TAG, e.toString());
 				}
 				Log.d(TAG, "end recording");
 			}
