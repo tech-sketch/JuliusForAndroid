@@ -141,13 +141,14 @@ public class JuliusActivity extends Activity {
 
 	private final View.OnClickListener onClickListener = new View.OnClickListener() {
 		private boolean isRecording = false;
+		private Thread writeAudioToFileThread = null;
 		
 		@Override
 		public void onClick(View v) {
-			Thread writeAudioToFileThread = new Thread(writeAudioToFile);
 			if (!isRecording) {
 				Log.d(TAG, "start recording");
 				isRecording = true;
+				writeAudioToFileThread = new Thread(writeAudioToFile);
 				button.setText(R.string.recording);
 				resultText.setText(JuliusActivity.this.getString(R.string.init_text));
 				audioRec.startRecording();
