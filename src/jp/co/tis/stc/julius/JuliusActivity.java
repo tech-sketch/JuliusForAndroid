@@ -144,17 +144,23 @@ public class JuliusActivity extends Activity {
 		
 		@Override
 		public void onClick(View v) {
+			Thread writeAudioToFileThread = new Thread(writeAudioToFile);
 			if (!isRecording) {
 				Log.d(TAG, "start recording");
 				isRecording = true;
 				button.setText(R.string.recording);
 				resultText.setText(JuliusActivity.this.getString(R.string.init_text));
 				audioRec.startRecording();
-				new Thread(writeAudioToFile).start();
+				writeAudioToFileThread.start();
 			}
 			else {
 				Log.d(TAG, "call recognize");
 				isRecording = false;
+				try {
+					writeAudioToFileThread.join();
+				} catch (InterruptedException e) {
+					Log.e(TAG, e.toString());
+				}
 				button.setText(R.string.recogninzing);
 				button.setEnabled(false);
 				new JuliusRecognizer(JuliusActivity.this).execute(Environment.getExternalStorageDirectory() + WAVE_PATH);
